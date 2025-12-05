@@ -1,1 +1,11 @@
+Backend (Create Session): Upon application submission, the backend calls stripe.checkout.sessions.create with line_items (the fee), mode: 'payment', and metadata: { applicationId }.
 
+Redirect: The API returns the session.url, and the frontend redirects the user to Stripe's secure payment page.
+
+Persist Intent: Simultaneously, a record is created in an application_payments table with the session_id and status pending.
+
+Webhook Handler: An endpoint (/api/webhooks/stripe) listens for the checkout.session.completed event.
+
+Verification: The webhook verifies the Stripe signature to prevent spoofing, then extracts the applicationId from the metadata.
+
+State Update: The handler updates the payment record to paid and executes a database transaction to advance the applications stage to 'Paid' or 'Review'.
